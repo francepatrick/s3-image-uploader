@@ -1,4 +1,11 @@
 declare class S3ImageUploader {
+    thumbnailSize: {
+        width: number;
+        height: number;
+    };
+    resize: {
+        size: number;
+    };
     private s3;
     private readonly bucketName;
     constructor(accessKeyId: string, secretAccessKey: string, bucketName: string);

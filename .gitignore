@@ -118,3 +118,4 @@ server/public
 /uploads/*
 /aws-codebuild-docker-images
 /codebuild
+test.ts

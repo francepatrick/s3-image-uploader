@@ -1,10 +1,10 @@
-import * as path from 'path';
-import * as crypto from 'crypto';
-import * as fs from 'fs';
+import path from 'path';
+import fs from 'fs';
 
-import * as AWS from 'aws-sdk'
-import * as mkdirp from 'mkdirp';
-import * as sharp from 'sharp';
+import AWS from 'aws-sdk'
+import mkdirp from 'mkdirp';
+import sharp from 'sharp';
+import {random} from './random';
 
 interface LocalFileInterface {
     filename: string;
@@ -12,7 +12,13 @@ interface LocalFileInterface {
 }
 
 class S3ImageUploader {
-
+    public thumbnailSize = {
+        width: 200,
+        height: 200
+    }
+    public resize = {
+        size: 800
+    }
     private s3: any;
     private readonly bucketName: string;
 
@@ -42,8 +48,8 @@ class S3ImageUploader {
      */
     private saveLocalImage = async (dailyDir: string, contents: string): Promise<LocalFileInterface> => {
         const {base64, localExtension}: any = await this.replaceImage(contents)
-        const raw = await crypto.pseudoRandomBytes(16);
-        const filename = raw.toString('hex') + Date.now() + localExtension;
+        const raw = await random(16);
+        const filename = raw + Date.now() + localExtension;
         const file = dailyDir + filename;
         return new Promise((resolve, reject) => {
             fs.writeFile(file, base64, 'base64', (err) => {
@@ -94,8 +100,8 @@ class S3ImageUploader {
     private createDirectory = (): Promise<string> => {
         return new Promise((resolve) => {
             const date = new Date();
-            const currentDir = path.join(__dirname, 'public')
-            const dailyDir = currentDir + '/uploads/temp/' + ('0' +
+            const currentDir = path.join(__dirname, '../uploads')
+            const dailyDir = currentDir + '/temp/' + ('0' +
                 (date.getMonth() + 1)).slice(-2) + '-' + date.getDate() + '-' + date.getFullYear();
             mkdirp.sync(dailyDir + '/original');
             mkdirp.sync(dailyDir + '/resized');
@@ -113,14 +119,15 @@ class S3ImageUploader {
      */
     private resizeImage = async (originalDir: { file: string, filename: string }, dir: string) => {
         try {
+            const { width, height} = this.thumbnailSize
             const {file, filename} = originalDir
             const image = sharp(file)
             const resizedOutput = dir + '/resized/' + filename
             const thumbnailOutput = dir + '/thumbnail/' + filename
             // resized from original size
-            await image.resize(800, null).toFormat(sharp.format.jpeg).toFile(resizedOutput);
+            await image.resize(this.resize.size, null).toFormat(sharp.format.jpeg).toFile(resizedOutput);
             // resize image to thumbnail from original size
-            await image.resize(200, 200).toFormat(sharp.format.jpeg).toFile(thumbnailOutput);
+            await image.resize(width, height).toFormat(sharp.format.jpeg).toFile(thumbnailOutput);
             return {message: 'file created!'}
         } catch (e) {
             return Promise.reject({message: e})
@@ -135,7 +142,7 @@ class S3ImageUploader {
         try {
             await this.checkImage(contents)
             const dailyDir = await this.createDirectory()
-            const {file, filename} = await this.saveLocalImage(dailyDir + '/original', contents)
+            const {file, filename} = await this.saveLocalImage(dailyDir + '/original/', contents)
             await this.resizeImage({file, filename}, dailyDir)
             const promises = [
                 this.uploadToS3(file, 'original-' + filename),
