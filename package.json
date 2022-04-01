@@ -1,0 +1,28 @@
+{
+  "name": "s3-image-uploader",
+  "version": "1.0.0",
+  "description": "AWS s3 image uploader",
+  "main": "lib/index.js",
+  "types": "lib",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/francepatrick/s3-image-uploader.git"
+  } ,
+  "scripts": {
+    "build": "tsc -p ."
+  },
+  "author": "France Patrick Lodonia",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.1105.0",
+    "crypto": "^1.0.1",
+    "fs": "0.0.1-security",
+    "mkdirp": "^1.0.4",
+    "prettier": "^2.6.1",
+    "sharp": "^0.30.3"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.23",
+    "typescript": "^4.6.3"
+  }
+}
